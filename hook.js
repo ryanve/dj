@@ -130,7 +130,7 @@
      */
     function mixin ( supplier, force ) {
         if ( !gnd(this) ) { throw new TypeError('@mixin'); }
-        return expand(this, supplier, force, true);
+        return expand(this, supplier, force);
     }
 
     /**
@@ -196,47 +196,6 @@
     
     // signify that this bridge() is module agnostic
     bridge['relay'] = true;
-    
-    /* = = = = alt version = = = = = = = = = = = = = = = = = = = = = = = = = 
-       We could use expand() to make bridge() but opted for the standalone 
-       loop above for now cause it's a bit easier to follow and takes basically 
-       the same amount of code. Using expand it'd be like:
-    
-     function bridge ( r, force, $ ) {
-
-        var s = this; // s is the supplier
-        if ( r == null || !gnd(s) ) { return; }
-        $ = typeof $ == 'function' || typeof $ == 'object' && $ ? $ : r;
-
-        return expand (r, s, force, function (k) {
-            var relay, v = s[k]; // `s === this`
-            if ( !v || typeof v != 'function' && typeof v != 'object' ) { return; }
-            if ( 'fn' === k && v !== s ) {
-                // 2nd check above prevents infinite loop 
-                // from `.fn` having ref to self on it.
-                bridge.call(v, r[k], force, $);
-            } else if ( r[k] !== r && r[k] !== $ ) {
-                // The check above prevents overwriting receiver's refs to self.
-                // Next, check for a relay prop:
-                relay = v['relay'];
-                if ( typeof relay == 'function' ) {
-                    // Fire relay functions. I haven't fully solidified
-                    // the relay call sig. This passes the essentials:
-                    relay =  relay.call(v, $, r[k]);
-                }
-                if ( relay !== false ) {// Provides a way to bypass non-agnostic props.
-                    // Transfer the value. Relayed versions must match orig type
-                    // to pass. Otherwise default to the orig supplier value:
-                    r[k] = typeof relay == typeof v ? relay || v : v;
-                }
-            }
-        });
-
-    }// bridge
-    
-    // signify that this bridge() is module agnostic
-    // bridge['relay'] = true;
-    = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = */
 
     /**
      * Create a new hook() function tied to a clean hash.
@@ -323,31 +282,30 @@
             return gnd(this) || void 0;
 
         }// hook
-
         
         // Allow an existing `hook()` to be bridged to another module so that
         // they can share hooks. (In other words, don't set its relay to false.) 
         // Provide the remix method as a way to explicitly redefine it:
         hook['remix'] = hookRemix;
-        
-        // Include refs to the full api:
-        hook['hook'] = hook; // self ref
-        hook['bridge'] = bridge;
-        hook['pro'] = pro;
-        hook['nu'] = nu;
-        hook['mixin'] = mixin;
-        hook['owns'] = owns;
-        hook['resample'] = resample;
-        hook['expand'] = expand;
-        
+
         return hook;
 
     }// hookRemix
 
-    // build the export:
+    // Build the export:
     hook = hookRemix();
+    
+    // Add refs to the full api:
+    hook['hook'] = hook; 
+    hook['bridge'] = bridge;
+    hook['pro'] = pro;
+    hook['nu'] = nu;
+    hook['mixin'] = mixin;
+    hook['owns'] = owns;
+    hook['resample'] = resample;
+    hook['expand'] = expand;
 
-    // return the export:
+    // Return the export version:
     return hook;
 
 })); 
