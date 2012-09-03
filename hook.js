@@ -130,7 +130,7 @@
      */
     function mixin ( supplier, force ) {
         if ( !gnd(this) ) { throw new TypeError('@mixin'); }
-        return expand(this, supplier, force);
+        return expand(this, supplier, force, true);
     }
 
     /**
