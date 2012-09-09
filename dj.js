@@ -1,10 +1,10 @@
 /*!
- * hook         remixable hook/bridge/relay API designed for
+ * dj           remixable hook/bridge/relay API designed for
  *              writing highly-extendable modular JavaScript
  * @author      Ryan Van Etten (c) 2012
- * @link        http://github.com/ryanve/hook
+ * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.x
+ * @version     0.5.0
  */
 
 /*jslint browser: true, devel: true, node: true, passfail: false, bitwise: true
@@ -15,10 +15,9 @@
 (function (root, name, factory) {// separate the module logic from its definition ( @ded pattern ;)
     if (typeof module != 'undefined' && module['exports']) { module['exports'] = factory(); } // node
     else { root[name] = root[name] || factory(); } // browser
-}(this, 'hook', function () {
+}(this, 'dj', function () {
 
-    var hook // the export
-      , root = this || window
+    var root = this || window
       , OP = Object.prototype
       , owns = OP.hasOwnProperty
 
@@ -74,7 +73,7 @@
     /**
      * Make new empty object w/ same proto as the `source`. Then
      * mixin the owned props from the `source` into the new object. 
-     * Quasi deep clone (done via inheritance)
+     * Quasi deep clone (done partially via inheritance)
      * @param  {(Object|Function|null)=}  source
      * @param  {(Object|Function|null)=}  opt_parent
      * @return {Object}
@@ -292,20 +291,16 @@
 
     }// hookRemix
 
-    // Build the export:
-    hook = hookRemix();
     
-    // Add refs to the full api:
-    hook['hook'] = hook; 
-    hook['bridge'] = bridge;
-    hook['pro'] = pro;
-    hook['nu'] = nu;
-    hook['mixin'] = mixin;
-    hook['owns'] = owns;
-    hook['resample'] = resample;
-    hook['expand'] = expand;
-
-    // Return the export version:
-    return hook;
+    return {// the export
+        'hook': hookRemix()
+      , 'owns' : owns
+      , 'pro': pro
+      , 'nu': nu
+      , 'bridge': bridge 
+      , 'resample': resample
+      , 'expand': expand
+      , 'mixin': mixin
+    };
 
 })); 

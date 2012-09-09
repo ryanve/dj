@@ -1,0 +1,14 @@
+{
+    "name": "dj",
+    "description": "remixable hook/bridge/relay API for writing extendable modular JavaScript",
+    "version": "0.5.0",
+    "homepage": "https://github.com/ryanve/dj",
+    "author": "Ryan Van Etten <@ryanve>",
+    "keywords": ["extension", "integration", "hook", "bridge", "ender", "jam", "javascript", "js"],
+    "main": "./dj.js",
+    "ender": "./ender.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ryanve/dj.git"
+    }
+}
