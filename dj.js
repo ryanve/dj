@@ -4,7 +4,7 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.5.0
+ * @version     0.6.0
  */
 
 /*jslint browser: true, devel: true, node: true, passfail: false, bitwise: true
@@ -13,34 +13,36 @@
 , sub: true, white: true, indent: 4, maxerr: 180 */
 
 (function (root, name, factory) {// separate the module logic from its definition ( @ded pattern ;)
-    if (typeof module != 'undefined' && module['exports']) { module['exports'] = factory(); } // node
+    if (typeof module != 'undefined' && module['exports']){ module['exports'] = factory(); } // node
     else { root[name] = root[name] || factory(); } // browser
 }(this, 'dj', function () {
 
-    var root = this || window
-      , OP = Object.prototype
+    var OP = Object.prototype
       , owns = OP.hasOwnProperty
 
-      , gnd = function (o) {// for grounding (securing) scope
-            return o == null || o === root ? 0 : o;
-        }
+      , gnd = (function () {
+            var globe = this || window;
+            return function (o) {
+                // for grounding (securing) scope
+                return o == null || o === globe ? 0 : o;
+            };
+        }())
 
-      , ES5lineage = (function ( Object ) {
-        // Feature test: check that Object.create exists and 
-        // that it properly implements the full capabilities
-        // of the first param. (Does not test the 2nd param.)
-        // Read @link github.com/kriskowal/es5-shim/pull/118
-            var k = 'k', n, o;
+      , ES5lineage = (function (Object) {
+            // Feature test: check that Object.create exists and 
+            // that it properly implements the full capabilities
+            // of the first param. (Does not test the 2nd param.)
+            // Read @link github.com/kriskowal/es5-shim/pull/118
+            var k = 'k', o;
             function fun () {}
-            fun[k] = 1;
+            fun[k] = 'object';
             try {
-                o = Object.create(null);
-                for ( n in o ) { return false; }
-                if ( Object.getPrototypeOf(o) !== null ) { return false; }
-                o = Object.create(fun);
-                return !!o && 1 === o[k];
+                o = Object.create(null); // attempt to create an object with *zero* properties
+                if ( !o || o.toString || Object.getPrototypeOf(o) !== null ) { return false; }
+                if ( !Object.create([]).pop || !(o = Object.create(fun)) ) { return false; }
+                return typeof o === o[k] && Object.getPrototypeOf(o) === fun;
             } catch (e){ return false; }
-        }( Object ))
+        }(Object))
         
       , pro = (ES5lineage && Object.getPrototypeOf) || function (ob) {
             // `Object.getPrototypeOf` fallback
@@ -84,7 +86,7 @@
         if ( void 0 === opt_parent ) { opt_parent = pro(source); }
         r = nu( opt_parent );
         for ( n in source ) {
-            // owned props are enumerated first so stop when unowned
+            // owned props enumerate first so stop when unowned
             if ( !owns.call(source, n) ) { break; }
             r[n] = source[n]; 
         }
@@ -97,20 +99,21 @@
      * to integrate ( and drop preconceived notions about what it should do ). 
      * Expand your mind ;]
      *
-     * @param  {(Object|Function)}  receiver
-     * @param  {(Object|Function)}  supplier
-     * @param  {boolean=}           force     whether to overwrite existing props
-     *                                        true  ==> no typechecking is done.
-     *                                        false ==> receiver[n] must be null|undefined.
-     *                                                  supplier[n] must NOT be null|undefined.
-     * @param  {boolean|Function=}  check     whether the prop must be owned (or a custom test)
+     * @param  {Object|Function}     receiver
+     * @param  {Object|Function}     supplier
+     * @param  {boolean=}            force     whether to overwrite existing props
+     *                                         true  ==> no typechecking is done.
+     *                                         false ==> receiver[n] must be null|undefined.
+     *                                                   supplier[n] must NOT be null|undefined.
+     * @param  {(boolean|Function)=}  check    whether supplier props must be owned (or a 
+     *                                         custom test, default: false)
      */
     function expand (receiver, supplier, force, check) {
         var n;
         if ( null == receiver ) { throw new TypeError('@expand'); }
         if ( null == supplier ) { return receiver; }
-        force = force === true;
-        check = check === true ? owns : check; 
+        force = force === true; // must be explicit
+        check = check === true ? owns : check;
         for ( n in supplier ) {
             if ( force || (receiver[n] == null && supplier[n] != null) ) {
                 if ( !check || check.call(supplier, n) ) {
@@ -126,44 +129,49 @@
      * @this   {(Object|Function)}            is the receiver
      * @param  {(Object|Function)}  supplier  is the supplier
      * @param  {boolean=}           force     whether to overwrite existing props
+     * @param  {boolean=}           check     whether props must be owned (default: true)
      */
-    function mixin ( supplier, force ) {
+    function mixin ( supplier, force, check ) {
         if ( !gnd(this) ) { throw new TypeError('@mixin'); }
-        return expand(this, supplier, force, true);
+        return expand(this, supplier, force, check !== false);
     }
 
     /**
-     * bridge()          Integrate applicable methods|objects into a host.
-     *                   Other types (number|string|undefined|boolean|null)
-     *                   are not bridged. `this` augments the receiver `r`
-     *                   The bridge() is mainly designed for merging jQuery-like
-     *                   modules, thus `.fn` properties are bridged one level deep
+     * bridge()      Integrate applicable methods|objects into a host. Other 
+     *               types (number|string|undefined|boolean|null) are not bridged. 
+     *               `this` augments the receiver `r`. `bridge()` is designed for
+     *               merging jQueryish modules, thus `.fn` props bridge one level deep.
      *
-     *                   method|objects whose `.relay` property is set to `false` get
-     *                   skipped. If the `.relay` property is a function, then it is
-     *                   fired with `this` being the method|object and the first arg 
-     *                   being the top-level scope (e.g. $ function) of the receiving 
-     *                   api. This provides a way for the method|object to be adapted to 
-     *                   the receiving api. If the result of the .relay function is a truthy
-     *                   value (such as new function) then that value will be transferred 
-     *                   instead of the original. If the relay returns `false` then the 
-     *                   method|object is skipped. If it returns any other falsey value or a 
-     *                   type other than the original then the transferred method will default
-     *                   back to the orig. In effect, the `.relay` property defaults to `true`. 
-     *                   It is not necessary to define a `.relay` property for methods|objects that
-     *                   are to be transferred as is. See the loop for the full relay signature.
+     *               Methods|objects whose `.relay` property is set to `false` get
+     *               skipped. If the `.relay` property is a function, it is fired 
+     *               with `this` being the method|object and the 1st arg being the 
+     *               main scope (e.g. $ function) of the receiving api. This provides
+     *               a way for the method|object to be adapted to the receiving api.
+     *
+     *               If the `.relay` returns a truthy value (such as new func) then that 
+     *               value is transferred instead of the orig. If the relay returns `false` 
+     *               then the method|ob is skipped. If it returns any other falsey value 
+     *               then the transferred method will default back to the orig. So in effect, 
+     *               the `.relay` prop defaults to `true` and it is not necessary to define 
+     *               it for methods|obs that are to be transferred as is.
      *       
-     * @this  {Object|Function}           supplier
-     * @param {Object|Function}    r      receiver
-     * @param {boolean=}           force  whether to overwrite existing props (default: false)
-     * @param {(Object|Function)=} $      the top-level of the host api (default: `r`)
+     * @this  {Object|Function}                supplier
+     * @param {Object|Function}         r      receiver
+     * @param {boolean=}                force  whether to overwrite existing props (default: false)
+     * @param {(Object|Function|null)=} $      the top-level of the host api (default: `r`)
+     *                                         For default behavior `$` should be omitted or set to 
+     *                                         `undefined`. This param allows you to bridge to a receiver, 
+     *                                         but relay methods based on a another host, for example 
+     *                                         `someModule.bridge({}, false, jQuery)`. Set `$` explicity
+     *                                         to `null` *only* if you want to communicate to relays that
+     *                                         there should be *no* main api.                                   
      */
     function bridge ( r, force, $ ) {
 
         var v, k, relay, s = this; // s is the supplier
-        if ( r == null || !gnd(s) ) { return; }
+        if ( !r || !gnd(s) ) { return; }
         force = true === force; // require explicit true to force
-        $ = typeof $ == 'function' || (typeof $ == 'object' && $) ? $ : r;
+        $ = typeof $ == 'function' || typeof $ == 'object' ? $ : r; // allow null
 
         for ( k in s ) {
             v = s[k];
@@ -173,18 +181,18 @@
                     // from `.fn` having ref to self on it.
                     bridge.call(v, r[k], force, $);
                 } else if ( force ? r[k] !== r && r[k] !== $ : r[k] == null ) {
-                    // The check above prevents overwriting receiver's refs to self.
-                    // Next, check for a relay prop:
+                    // The check above prevents overwriting receiver's refs to
+                    // self (even if forced). Now handle relays and the transfer:
                     relay = v['relay'];
                     if ( typeof relay == 'function' ) {
-                        // Fire relay functions. I haven't fully solidified
-                        // the relay call sig. This passes the essentials:
-                        relay =  relay.call(v, $, r[k]);
+                        // Fire relay functions. I haven't fully solidified the
+                        // relay call sig. Considering: .call(v, $, r[k], k, r)
+                        // This passes the essentials:
+                        relay = relay.call(v, $, r[k]);
                     }
                     if ( relay !== false ) {// Provides a way to bypass non-agnostic props.
-                        // Transfer the value. Relayed versions must match orig type
-                        // to pass. Otherwise default to the orig supplier value:
-                        r[k] = typeof relay == typeof v ? relay || v : v;
+                        // Transfer the value. Default to the orig supplier value:
+                        r[k] = relay || v;
                     }
                 }
             }
@@ -226,8 +234,9 @@
                     return curr[k]; // GET-simple
                 }
                 if ( info ) { // only SET if 'BURN all' has not occured
-                    if ( typeof v == 'function' ) {// SET-simple
-                        if ( info[k] !== false ) {// update unless burned
+                    // SET-simple (`v` can be "object" only if the hook is empty or its default is "object")
+                    if ( typeof v == 'function' || typeof v == 'object' && typeof defs[k] != 'function' ) {
+                        if ( v && info[k] !== false ) {// update unless burned
                             curr[k] = v;
                             defs[k] = defs[k] || v;
                         }
@@ -290,7 +299,6 @@
         return hook;
 
     }// hookRemix
-
     
     return {// the export
         'hook': hookRemix()
@@ -301,6 +309,9 @@
       , 'resample': resample
       , 'expand': expand
       , 'mixin': mixin
+      , 'submix': function (subModule, force) {
+            return bridge.call(subModule, this, force);
+        }
     };
 
-})); 
+}));
