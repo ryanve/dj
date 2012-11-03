@@ -4,7 +4,7 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.6.0
+ * @version     0.6.1
  */
 
 /*jslint browser: true, devel: true, node: true, passfail: false, bitwise: true
@@ -12,9 +12,10 @@
 , nomen: true, plusplus: true, regexp: true, undef: true, sloppy: true, stupid: true
 , sub: true, white: true, indent: 4, maxerr: 180 */
 
-(function (root, name, factory) {// separate the module logic from its definition ( @ded pattern ;)
-    if (typeof module != 'undefined' && module['exports']){ module['exports'] = factory(); } // node
-    else { root[name] = root[name] || factory(); } // browser
+(function (root, name, factory) {// github.com/umdjs/umd
+    if ( typeof module != 'undefined' && module['exports'] ) { 
+        module['exports'] = factory(); // node / ender / common
+    } else { root[name] = root[name] || factory(); } // browser
 }(this, 'dj', function () {
 
     var OP = Object.prototype
