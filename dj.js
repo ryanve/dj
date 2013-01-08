@@ -373,7 +373,7 @@
         }
     };
     
-    mixin(dj, methods, true);
+    expand(dj, methods, true);
     
     // set the hook and return `dj`
     return hook('dj', dj);
