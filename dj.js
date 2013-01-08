@@ -4,7 +4,7 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.6.1
+ * @version     0.7.0
  */
 
 /*jslint browser: true, devel: true, node: true, passfail: false, bitwise: true
@@ -18,7 +18,9 @@
     } else { root[name] = root[name] || factory(); } // browser
 }(this, 'dj', function () {
 
-    var OP = Object.prototype
+    var hook
+      , methods
+      , OP = Object.prototype
       , owns = OP.hasOwnProperty
 
       , gnd = (function () {
@@ -70,8 +72,61 @@
             object["__proto__"] = parent; // ensure `Object.getPrototypeOf` will work in IE
             return object;
         }
-
     ;
+    
+    /**
+    * Logic for discerning arrays/arr-like object from other objects or types.
+    * If `o` is a valid "object" w/ a non-NaN "number" length prop, it returns 
+    * the length. Otherwise it returns undefined.
+    * @param  {*}  o  is the object (or unknown) in question
+    * @return {number|undefined}
+    */
+    function count (o) {// inlined @ minification
+        if ( !o || typeof o != 'object' || o.nodeType > 0 || o === window ) return
+        if ( typeof (o = o.length) == 'number' && o === o ) return o
+    }
+
+    /**
+    * $()
+    * @param  {*=}      item   CSS selector | DOM node(s) | fn to fire | anything
+    * @param  {Object=} root   node(s) from which to base selector queries
+    * @return {Dj}
+    */  
+    function dj (item, root) {
+        return new Dj(item, root)
+    }
+
+    /**
+    * @constructor
+    * @param  {*=}      item   CSS selector | DOM node(s) | fn to fire | anything
+    * @param  {Object=} root   node(s) from which to base selector queries
+    * adapted from jQuery and ender
+    */  
+    function Dj (item, root) {
+        var i
+        this.length = 0 // Ensure `this` owns "length" like a real array
+        // The check sequence here is designed to maximize extendabilty
+        // Start @ strings so the result parlays into the subsequent checks
+        if (typeof item == 'string') // Only set .selector for strings
+            item = hook('select')(this['selector'] = item, root)
+        if (null == item) // wrap any item *except* null|undefined
+            return this
+        if (typeof item == 'function') // designed for closure or ready shortcut
+            hook('closure')(item, root)
+        else if ((i = count(item)) == null) // node | scalar | not arr-like
+            this[this.length++] = item
+        else for (this.length = i = i > 0 ? i >> 0 : 0; i--;) // Array-like
+            this[i] = item[i]
+        // The bitwise >> 0 in the loop expr ensures this.length is an *integer*
+        // A return `this` is implicit when instantiated via `new`
+    }
+
+    // Allow `$.fn` and `$.prototype` to remain in sync
+    // and make it so `$() instanceof $` is `true`
+    // @link  github.com/ender-js/ender-js/pull/17
+    dj.prototype = dj['fn'] = Dj.prototype = {}; // nu(AP)
+
+    dj['fn']['$'] = dj; // reference to self
 
     /**
      * Make new empty object w/ same proto as the `source`. Then
@@ -95,7 +150,7 @@
     }
 
     /**
-     * Multi-purpose extender/augmenter, with simple yet very useful options, called 
+     * Multi-purpose extdj/augmenter, with simple yet very useful options, called 
      * expand b/c many libs implement extend/augment methods, so this makes it easier 
      * to integrate ( and drop preconceived notions about what it should do ). 
      * Expand your mind ;]
@@ -277,7 +332,7 @@
             if ( null === k ) { // GET-status-all
                 return !!info; 
             }
-            
+
             // `k` must be "object" if we get to here
             if ( info ) {// SET-multi
                 prefix = typeof v == 'string' ? v : '';
@@ -301,10 +356,13 @@
 
     }// hookRemix
     
-    return {// the export
-        'hook': hookRemix()
-      , 'owns' : owns
+    hook = hookRemix();
+    
+    methods = {
+        'hook': hook
+      , 'owns': owns
       , 'pro': pro
+      , 'count': count
       , 'nu': nu
       , 'bridge': bridge 
       , 'resample': resample
@@ -314,5 +372,10 @@
             return bridge.call(subModule, this, force);
         }
     };
+    
+    mixin(dj, methods, true);
+    
+    // set the hook and return `dj`
+    return hook('dj', dj);
 
 }));

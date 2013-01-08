@@ -1,2 +1,2 @@
-// bridge file for ender.no.de
+// bridge file for ender.jit.su
 require('dj')['bridge'](ender);
