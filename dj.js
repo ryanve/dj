@@ -6,51 +6,47 @@
  * @license     MIT
  * @version     0.7.1
  */
+ 
+/*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, evil:true, undef:true
+, unused:true, browser:true, devel:true, jquery:true, es5:true, node:true, indent:4, maxerr:100 */
 
-/*jslint browser: true, devel: true, node: true, passfail: false, bitwise: true
-, continue: true, debug: true, eqeq: true, es5: true, forin: true, newcap: true
-, nomen: true, plusplus: true, regexp: true, undef: true, sloppy: true, stupid: true
-, sub: true, white: true, indent: 4, maxerr: 180 */
-
-(function (root, name, factory) {// github.com/umdjs/umd
-    if ( typeof module != 'undefined' && module['exports'] ) { 
-        module['exports'] = factory(); // node / ender / common
-    } else { root[name] = root[name] || factory(); } // browser
-}(this, 'dj', function () {
+(function (root, name, make) {
+    if (typeof module != 'undefined' && module['exports'])
+        module['exports'] = make(); 
+    else root[name] = root[name] || make();
+}(this, 'dj', function() {
 
     var hook
       , methods
       , OP = Object.prototype
       , owns = OP.hasOwnProperty
 
-      , gnd = (function () {
+      , gnd = (function() {
             var globe = this || window;
-            return function (o) {
+            return function(o) {
                 // for grounding (securing) scope
                 return o == null || o === globe ? 0 : o;
             };
         }())
 
-      , ES5lineage = (function (Object) {
+      , ES5lineage = (function(Object) {
             // Feature test: check that Object.create exists and 
             // that it properly implements the full capabilities
             // of the first param. (Does not test the 2nd param.)
             // Read @link github.com/kriskowal/es5-shim/pull/118
-            var k = 'k', o;
-            function fun () {}
+            var o, k = 'k';
+            function fun() {}
             fun[k] = 'object';
             try {
                 o = Object.create(null); // attempt to create an object with *zero* properties
-                if ( !o || o.toString || Object.getPrototypeOf(o) !== null ) { return false; }
-                if ( !Object.create([]).pop || !(o = Object.create(fun)) ) { return false; }
+                if (!o || o.toString || null !== Object.getPrototypeOf(o)) { return false; }
+                if (!Object.create([]).pop || !(o = Object.create(fun))) { return false; }
                 return typeof o === o[k] && Object.getPrototypeOf(o) === fun;
-            } catch (e){ return false; }
+            } catch (e) { return false; }
         }(Object))
         
-      , pro = (ES5lineage && Object.getPrototypeOf) || function (ob) {
-            // `Object.getPrototypeOf` fallback
-            if ( void 0 !== ob["__proto__"] ) { return ob["__proto__"]; }
-            return ob.constructor ? ob.constructor.prototype : OP;
+      , pro = (ES5lineage && Object.getPrototypeOf) || function(ob) {
+            return void 0 !== ob["__proto__"] ? ob["__proto__"] : ob.constructor ? ob.constructor.prototype : OP;
         }
 
         /**
@@ -64,15 +60,14 @@
          */
       , nu = (ES5lineage && Object.create) || function (parent) {
             /** @constructor */
-            function F () {} // An empty constructor.
+            function F() {} // An empty constructor.
             var object; // Becomes an `instanceof F`            
             if (null === parent) { return { "__proto__": null }; }
             F.prototype = parent;  // Set F's prototype to the parent Object
             object = new F; // Get an empty object (instance) that inherits `parent`
             object["__proto__"] = parent; // ensure `Object.getPrototypeOf` will work in IE
             return object;
-        }
-    ;
+        };
     
     /**
     * Logic for discerning arrays/arr-like object from other objects or types.
@@ -81,9 +76,9 @@
     * @param  {*}  o  is the object (or unknown) in question
     * @return {number|undefined}
     */
-    function count (o) {// inlined @ minification
-        if ( !o || typeof o != 'object' || o.nodeType > 0 || o === window ) return
-        if ( typeof (o = o.length) == 'number' && o === o ) return o
+    function count (o) {
+        if (!o || typeof o != 'object' || o.nodeType > 0 || o === window) return;
+        if (typeof (o = o.length) == 'number' && o === o) return o;
     }
 
     /**
@@ -93,7 +88,7 @@
     * @return {Dj}
     */  
     function dj (item, root) {
-        return new Dj(item, root)
+        return new Dj(item, root);
     }
 
     /**
@@ -102,23 +97,27 @@
     * @param  {Object=} root   node(s) from which to base selector queries
     * adapted from jQuery and ender
     */  
-    function Dj (item, root) {
-        var i
-        this.length = 0 // Ensure `this` owns "length" like a real array
+    function Dj(item, root) {
+        var i;
+        this.length = 0; // Ensure `this` owns "length" like a real array
         // The check sequence here is designed to maximize extendabilty
         // Start @ strings so the result parlays into the subsequent checks
-        if (typeof item == 'string') // Only set .selector for strings
-            item = hook('select')(this['selector'] = item, root)
-        if (null == item) // wrap any item *except* null|undefined
-            return this
-        if (typeof item == 'function') // designed for closure or ready shortcut
-            hook('closure')(item, root)
-        else if ((i = count(item)) == null) // node | scalar | not arr-like
-            this[this.length++] = item
-        else for (this.length = i = i > 0 ? i >> 0 : 0; i--;) // Array-like
-            this[i] = item[i]
-        // The bitwise >> 0 in the loop expr ensures this.length is an *integer*
-        // A return `this` is implicit when instantiated via `new`
+        if (typeof item == 'string')
+            // .selector only applies to to strings
+            item = hook('select')(this['selector'] = item, root);
+
+        if (null == item)
+            return this; // wrap any item *except* null|undefined
+
+        if (typeof item == 'function')
+            // designed for closure or ready shortcut
+            hook('closure')(item, root);
+        else if (null == (i = count(item)))
+            // node|scalar|not arr-like
+            this[this.length++] = item;
+        else for (this.length = i = i > 0 ? i >> 0 : 0; i--;)
+            // array-like | bitwise >> ensures *integer* length
+            this[i] = item[i];
     }
 
     // sync the prototypes
@@ -135,14 +134,14 @@
      * @param  {(Object|Function|null)=}  opt_parent
      * @return {Object}
      */
-    function resample (source, opt_parent) {
+    function resample(source, opt_parent) {
         var n, r;
-        if ( true === source || !arguments.length ) { source = this; }
-        if ( void 0 === opt_parent ) { opt_parent = pro(source); }
-        r = nu( opt_parent );
-        for ( n in source ) {
+        source = arguments.length && true !== source ? source : this;
+        opt_parent = void 0 === opt_parent ? pro(source) : opt_parent;
+        r = nu(opt_parent);
+        for (n in source) {
             // owned props enumerate first so stop when unowned
-            if ( !owns.call(source, n) ) { break; }
+            if (!owns.call(source, n)) { break; }
             r[n] = source[n]; 
         }
         return r;
@@ -163,15 +162,15 @@
      * @param  {(boolean|Function)=}  check    whether supplier props must be owned (or a 
      *                                         custom test, default: false)
      */
-    function expand (receiver, supplier, force, check) {
+    function expand(receiver, supplier, force, check) {
         var n;
-        if ( null == receiver ) { throw new TypeError('@expand'); }
-        if ( null == supplier ) { return receiver; }
+        if (null == receiver) { throw new TypeError('@expand'); }
+        if (null == supplier) { return receiver; }
         force = force === true; // must be explicit
         check = check === true ? owns : check;
-        for ( n in supplier ) {
-            if ( force || (receiver[n] == null && supplier[n] != null) ) {
-                if ( !check || check.call(supplier, n) ) {
+        for (n in supplier) {
+            if (force || null == receiver[n] && null != supplier[n]) {
+                if (!check || check.call(supplier, n)) {
                     receiver[n] = supplier[n];
                 }
             }
@@ -186,8 +185,8 @@
      * @param  {boolean=}           force     whether to overwrite existing props
      * @param  {boolean=}           check     whether props must be owned (default: true)
      */
-    function mixin ( supplier, force, check ) {
-        if ( !gnd(this) ) { throw new TypeError('@mixin'); }
+    function mixin(supplier, force, check) {
+        if (!gnd(this)) { throw new TypeError('@mixin'); }
         return expand(this, supplier, force, check !== false);
     }
 
@@ -221,31 +220,30 @@
      *                                         to `null` *only* if you want to communicate to relays that
      *                                         there should be *no* main api.                                   
      */
-    function bridge ( r, force, $ ) {
-
+    function bridge(r, force, $) {
         var v, k, relay, s = this; // s is the supplier
-        if ( !r || !gnd(s) ) { return; }
+        if (!r || !gnd(s)) { return; }
         force = true === force; // require explicit true to force
         $ = typeof $ == 'function' || typeof $ == 'object' ? $ : r; // allow null
 
-        for ( k in s ) {
+        for (k in s) {
             v = s[k];
-            if ( typeof v == 'function' || typeof v == 'object' && v ) {
-                if ( 'fn' === k && v !== s ) {
+            if (typeof v == 'function' || typeof v == 'object' && v) {
+                if ('fn' === k && v !== s) {
                     // 2nd check above prevents infinite loop 
                     // from `.fn` having ref to self on it.
                     bridge.call(v, r[k], force, $);
-                } else if ( force ? r[k] !== r && r[k] !== $ : r[k] == null ) {
+                } else if (force ? r[k] !== r && r[k] !== $ : r[k] == null) {
                     // The check above prevents overwriting receiver's refs to
                     // self (even if forced). Now handle relays and the transfer:
                     relay = v['relay'];
-                    if ( typeof relay == 'function' ) {
+                    if (typeof relay == 'function') {
                         // Fire relay functions. I haven't fully solidified the
                         // relay call sig. Considering: .call(v, $, r[k], k, r)
                         // This passes the essentials:
                         relay = relay.call(v, $, r[k]);
                     }
-                    if ( relay !== false ) {// Provides a way to bypass non-agnostic props.
+                    if (relay !== false) {// Provides a way to bypass non-agnostic props.
                         // Transfer the value. Default to the orig supplier value:
                         r[k] = relay || v;
                     }
@@ -253,7 +251,6 @@
             }
         }
         return r; // receiver
-
     }// bridge
     
     // signify that this bridge() is module agnostic
@@ -264,7 +261,6 @@
      * @return {Function}
      */
     function hookRemix () {
-        
         // Use objects that inherit null for hashes so that we don't need to
         // test hasOwnProperty on "gets".
         // Sidenode: ES5's `Object.create(null)` returns `{"__proto__": null}`
@@ -277,82 +273,82 @@
          * @param {*=}  k     key
          * @param {*=}  v     value
          */
-        function hook (k, v) {
+        function hook(k, v) {
 
             var n, parlay, prefix, clone; 
             k = typeof k == 'function' ? k.call(this, hook()) : k;
             
             // optimize for simple usage (esp. GET-simple)
             
-            if ( typeof k == 'string' || typeof k == 'number' ) {
-                if ( void 0 === v ) {
+            if (typeof k == 'string' || typeof k == 'number') {
+                if (void 0 === v) {
                     return curr[k]; // GET-simple
                 }
-                if ( info ) { // only SET if 'BURN all' has not occured
-                    // SET-simple (`v` can be "object" only if the hook is empty or its default is "object")
-                    if ( typeof v == 'function' || typeof v == 'object' && typeof defs[k] != 'function' ) {
-                        if ( v && info[k] !== false ) {// update unless burned
+                if (info) { // only SET if 'BURN all' has not occured
+                    // SET-simple: `v` can be "object" only if the hook is empty or its default is "object"
+                    if (typeof v == 'function' || typeof v == 'object' && typeof defs[k] != 'function') {
+                        if (v && info[k] !== false) {// update unless burned
                             curr[k] = v;
                             defs[k] = defs[k] || v;
                         }
-                    } else if ( v === false ) {// burn it (lock it) at its current state
-                        info[k] = v; // false
-                    } else if ( v === true ) { // restore default (possible even if burned)
+                    } else if (v === false) {
+                        // burn it (lock it) at its current state
+                        info[k] = v;
+                    } else if (v === true) {
+                        // restore default (possible even if burned)
                         curr[k] = defs[k]; 
                     }
                 }
-                if ( null === v ) {
+                if (null === v) {
                     return info[k] !== false; // status
                 }
 
                 return gnd(this) || curr[k]; // curr value
             }
 
-            if ( typeof k == 'boolean' ) {
-                if ( !k ) {// BURN all (false)
-                    info = defs = null; // (nullify both to free up memory)
-                } else if ( info ) {// RESTORE defaults (true) (if 'BURN all' has not occured)
+            if (typeof k == 'boolean') {
+                if (!k) {
+                    // BURN all (false)
+                    info = defs = null; // nullify both to free up memory
+                } else if (info) {// RESTORE defaults (true) (if 'BURN all' has not occured)
                     curr = nu(null);
-                    for ( n in defs ) {
+                    for (n in defs) {
                         curr[n] = defs[n]; 
                     }
                 }
                 k = void 0; // reset `k` so it parlays into the GET-all block
             }
             
-            if ( void 0 === k ) { // GET-all
+            if (void 0 === k) { // GET-all
                 clone = nu(null); 
-                for ( n in curr ) {
+                for (n in curr) {
                     clone[n] = curr[n]; 
                 }
                 return clone;
             }
             
-            if ( null === k ) { // GET-status-all
+            if (null === k) { // GET-status-all
                 return !!info; 
             }
 
-            // `k` must be "object" if we get to here
-            if ( info ) {// SET-multi
+            // `k` should be "object" if we get to here
+            if (info) {// SET-multi
                 prefix = typeof v == 'string' ? v : '';
                 parlay = typeof v == 'boolean';
-                for ( n in k ) {
+                for (n in k) {
                     hook(prefix + n, k[n]); // set each
                     parlay && hook(prefix + n, v); 
                 }
             }
-            
-            return gnd(this) || void 0;
 
+            return gnd(this) || void 0;
         }// hook
         
         // Allow an existing `hook()` to be bridged to another module so that
         // they can share hooks. (In other words, don't set its relay to false.) 
         // Provide the remix method as a way to explicitly redefine it:
         hook['remix'] = hookRemix;
-
         return hook;
-
     }// hookRemix
     
     hook = hookRemix();
@@ -367,14 +363,13 @@
       , 'resample': resample
       , 'expand': expand
       , 'mixin': mixin
-      , 'submix': function (subModule, force) {
+      , 'submix': function(subModule, force) {
             return bridge.call(subModule, this, force);
         }
     };
     
     expand(dj, methods, true);
-    
+
     // set the hook and return `dj`
     return hook('dj', dj);
-
 }));
