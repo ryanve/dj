@@ -4,7 +4,7 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.7.0
+ * @version     0.7.1
  */
 
 /*jslint browser: true, devel: true, node: true, passfail: false, bitwise: true
@@ -121,10 +121,9 @@
         // A return `this` is implicit when instantiated via `new`
     }
 
-    // Allow `$.fn` and `$.prototype` to remain in sync
-    // and make it so `$() instanceof $` is `true`
-    // @link  github.com/ender-js/ender-js/pull/17
-    dj.prototype = dj['fn'] = Dj.prototype = {}; // nu(AP)
+    // sync the prototypes
+    // re: github.com/ender-js/ender-js/pull/17
+    dj['fn'] = dj.prototype = Dj.prototype;
 
     dj['fn']['$'] = dj; // reference to self
 
