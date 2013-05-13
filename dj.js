@@ -4,7 +4,7 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.7.1
+ * @version     0.7.2
  */
  
 /*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, evil:true, undef:true
@@ -72,13 +72,13 @@
     /**
     * Logic for discerning arrays/arr-like object from other objects or types.
     * If `o` is a valid "object" w/ a non-NaN "number" length prop, it returns 
-    * the length. Otherwise it returns undefined.
+    * the length. Otherwise it returns boolean.
     * @param  {*}  o  is the object (or unknown) in question
-    * @return {number|undefined}
+    * @return {number|boolean}
     */
-    function count (o) {
-        if (!o || typeof o != 'object' || o.nodeType > 0 || o === window) return;
-        if (typeof (o = o.length) == 'number' && o === o) return o;
+    function count(o) {
+        if (!o || typeof o != 'object' || o.nodeType || o === window) return false;
+        return typeof (o = o.length) == 'number' && o === o && o;
     }
 
     /**
@@ -87,7 +87,7 @@
     * @param  {Object=} root   node(s) from which to base selector queries
     * @return {Dj}
     */  
-    function dj (item, root) {
+    function dj(item, root) {
         return new Dj(item, root);
     }
 
@@ -112,7 +112,7 @@
         if (typeof item == 'function')
             // designed for closure or ready shortcut
             hook('closure')(item, root);
-        else if (null == (i = count(item)))
+        else if (false === (i = count(item)))
             // node|scalar|not arr-like
             this[this.length++] = item;
         else for (this.length = i = i > 0 ? i >> 0 : 0; i--;)
