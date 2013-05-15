@@ -4,11 +4,11 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.7.2
+ * @version     0.7.3
  */
  
-/*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, evil:true, undef:true
-, unused:true, browser:true, devel:true, jquery:true, es5:true, node:true, indent:4, maxerr:100 */
+/*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, node:true, evil:true,
+  undef:true, unused:true, browser:true, devel:true, jquery:true, supernew:true, maxerr:100 */
 
 (function (root, name, make) {
     if (typeof module != 'undefined' && module['exports'])
@@ -70,15 +70,14 @@
         };
     
     /**
-    * Logic for discerning arrays/arr-like object from other objects or types.
-    * If `o` is a valid "object" w/ a non-NaN "number" length prop, it returns 
-    * the length. Otherwise it returns boolean.
-    * @param  {*}  o  is the object (or unknown) in question
-    * @return {number|boolean}
-    */
+     * Logic for discerning arrays/arr-like object from other objects or types.
+     * If `o` is a valid "object" w/ a non-NaN "number" length prop, it returns 
+     * the length. Otherwise it returns false.
+     * @param  {*}  o  is the object (or unknown) in question
+     * @return {number|boolean}
+     */
     function count(o) {
-        if (!o || typeof o != 'object' || o.nodeType || o === window) return false;
-        return typeof (o = o.length) == 'number' && o === o && o;
+        return !!o && typeof o == 'object' && !o.nodeType && o != o.window && (o = o.length) === +o && o;
     }
 
     /**

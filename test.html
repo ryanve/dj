@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="dns-prefetch" href="//airve.com">
+    <title>dj: test suite</title>
+    <meta name=viewport content="width=device-width,initial-scale=1.0">
+    <meta name=description content="JavaScript test suite for dj.js">
+    <meta name=author content="Ryan Van Etten">
+    <style>
+        html { font-family:sans-serif; background:#fffddd; color:#222; }
+        body { width:96%; margin:auto; }
+    </style>
+</head>
+<body>
+
+<h1>
+    <a href="http://github.com/ryanve/dj">dj</a>: test suite
+</h1>
+
+<main id="main" role="main">
+    <p>Open the console to view results.</p>
+    <p>View the pagesource to view tests.</p>
+</main>
+
+<!-- airve.github.io -->
+<script src="../aok/aok.min.js"></script>
+<script src="../elo/elo.min.js"></script>
+<script src="dj.js"></script>
+<script>
+    (function(root, document) {
+        var docElem = document.documentElement
+          , aok = root.aok
+          , elo = root.elo
+          , dj = root.dj
+          , $ = dj;
+        
+        function twin(source, parent) {
+            var twin, owned, i = arguments.length;
+            source = i ? source : this; // use self when called w/o args
+            parent = 2 == i ? parent : Object.getPrototypeOf(source);
+            twin = Object.create(parent);
+            owned = Object.getOwnPropertyNames(source);
+            for (i = owned.length; i--;) {
+                twin[owned[i]] = source[owned[i]];
+            }
+            return twin;
+        }
+        
+        dj.twin = twin;
+
+        aok({
+            id: 'stackItems'
+          , test: function() {
+                var plain = {}
+                  , trick = {length:true}
+                  , array = [0, 1, 2, 3]
+                  , sparse = new Array(2)
+                  , liveList = document.getElementsByTagName('*')
+                  , textNode = document.createTextNode('text nodes have .length')
+                  , anchor = document.createElement('a')
+                  , $array = $(array)
+                  , $$array = $($array)
+                  , $sparse = $(sparse)
+                  , $liveList = $(liveList)
+                  , $textNode = $(textNode)
+                  , $anchor = $(anchor)
+                  , $docElem = $(docElem)
+                  , $plain = $(plain)
+                  , $trick = $(trick)
+                  , $root = $(root)
+                  , $document = $(document)
+                  , $zed = $(0)
+                  , $one = $(1);
+
+                return (
+                    0 === $().length
+                 && 0 === $(null).length
+                 && 0 === $(undefined, document).length
+                 && 0 === $(null, document).length
+                 && 1 === $zed.length
+                 && 1 === $one.length
+                 && 1 === $(false).length
+                 && 1 === $(true).length
+                 && 1 === $plain.length
+                 && 1 === $trick.length
+                 && 1 === $textNode.length
+                 && 1 === $docElem.length
+                 && 0 === $zed[0]
+                 && 1 === $one[0]
+                 && 1 === $anchor.length
+                 && anchor === $anchor[0]
+                 && textNode === $textNode[0]
+                 && docElem === $docElem[0]
+                 && root === $root[0]
+                 && document === $document[0]
+                 && plain === $plain[0]
+                 && trick === $trick[0]
+                 && liveList.length === $liveList.length
+                 && sparse.length === $sparse.length
+                 && 0 in $sparse // should own undefined
+                 && array.length === $array.length
+                 && array.length === $$array.length
+                 && $array !== $$array // ensure separate instance
+                );
+            }
+        });
+    }(this, document));
+</script>
+</body>
+</html>
