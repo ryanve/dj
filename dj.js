@@ -4,7 +4,7 @@
  * @author      Ryan Van Etten (c) 2012
  * @link        http://github.com/ryanve/dj
  * @license     MIT
- * @version     0.7.3
+ * @version     0.7.4
  */
  
 /*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, node:true, evil:true,
@@ -79,6 +79,26 @@
     function count(o) {
         return !!o && typeof o == 'object' && !o.nodeType && o != o.window && (o = o.length) === +o && o;
     }
+    
+    /**
+     * Push an item (or list) into a stack and return the stack.
+     * @param  {Object|Array}  stack  receiver (becomes array-like if not already)
+     * @param  {*=}            item   value (or list) to push into `stack`
+     */
+    function stack(stack, item) {
+        var h, i = stack.length;
+        i = i > 0 ? i >> 0 : 0; // non-negative integer
+        if (null != item) {
+            h = count(item);
+            if (false === h) {
+                stack[i++] = item; // node|scalar|function|not arr-like
+            } else while (i < h) {
+                stack[i++] = item[i]; // array-like
+            }
+        }
+        stack.length = i;
+        return stack;
+    }
 
     /**
     * $()
@@ -91,32 +111,19 @@
     }
 
     /**
-    * @constructor
-    * @param  {*=}      item   CSS selector | DOM node(s) | fn to fire | anything
-    * @param  {Object=} root   node(s) from which to base selector queries
-    * adapted from jQuery and ender
-    */  
+     * @constructor
+     * @param  {*=}      item   CSS selector | DOM node(s) | fn to fire | anything
+     * @param  {Object=} root   node(s) from which to base selector queries
+     * adapted from jQuery and ender
+     */  
     function Dj(item, root) {
-        var i;
         this.length = 0; // Ensure `this` owns "length" like a real array
-        // The check sequence here is designed to maximize extendabilty
+        // The logic sequence here is designed to maximize extensibility.
         // Start @ strings so the result parlays into the subsequent checks
-        if (typeof item == 'string')
-            // .selector only applies to to strings
-            item = hook('select')(this['selector'] = item, root);
-
-        if (null == item)
-            return this; // wrap any item *except* null|undefined
-
-        if (typeof item == 'function')
-            // designed for closure or ready shortcut
-            hook('closure')(item, root);
-        else if (false === (i = count(item)))
-            // node|scalar|not arr-like
-            this[this.length++] = item;
-        else for (this.length = i = i > 0 ? i >> 0 : 0; i--;)
-            // array-like | bitwise >> ensures *integer* length
-            this[i] = item[i];
+        // The 'closure' hook is designed for a closure or ready shortcut
+        // The .selector property only applies to strings and is otherwise unset.
+        item = typeof item == 'string' ? hook('select')(this['selector'] = item, root) : item;
+        typeof item == 'function' ? hook('closure')(item, root) : null != item && stack(this, item);
     }
 
     // sync the prototypes
@@ -357,6 +364,7 @@
       , 'owns': owns
       , 'pro': pro
       , 'count': count
+      , 'stack': stack
       , 'nu': nu
       , 'bridge': bridge 
       , 'resample': resample

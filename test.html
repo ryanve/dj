@@ -35,6 +35,11 @@
           , dj = root.dj
           , $ = dj;
         
+        /**
+         * @param  {Object|Function}          source
+         * @param  {(Object|Function|null)=}  parent
+         * @return {Object}
+         */
         function twin(source, parent) {
             var twin, owned, i = arguments.length;
             source = i ? source : this; // use self when called w/o args
