@@ -76,22 +76,22 @@
     
     /**
      * Push an item (or list) into a stack and return the stack.
-     * @param  {Object|Array}  stack  receiver (becomes array-like if not already)
-     * @param  {*=}            item   value (or list) to push into `stack`
+     * @param  {Object|Array} target  receiver (becomes array-like if not already)
+     * @param  {*=}           item    value (or list) to push into `stack`
      */
-    function stack(stack, item) {
-        var h, i = stack.length;
+    function stack(target, item) {
+        var h, i = target.length;
         i = i > 0 ? i >> 0 : 0; // non-negative integer
         if (null != item) {
             h = count(item);
             if (false === h) {
-                stack[i++] = item; // node|scalar|function|not arr-like
+                target[i++] = item; // node|scalar|function|not arr-like
             } else while (i < h) {
-                stack[i++] = item[i]; // array-like
+                target[i++] = item[i]; // array-like
             }
         }
-        stack.length = i;
-        return stack;
+        target.length = i;
+        return target;
     }
 
     /**
