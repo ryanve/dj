@@ -3,7 +3,7 @@
  * @link        http://github.com/ryanve/dj
  * @copyright   Ryan Van Etten (c) 2012
  * @license     MIT
- * @version     0.8.0
+ * @version     0.8.1
  */
  
 /*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, node:true, evil:true,
@@ -86,8 +86,8 @@
             h = count(item);
             if (false === h) {
                 target[i++] = item; // node|scalar|function|not arr-like
-            } else while (i < h) {
-                target[i++] = item[i]; // array-like
+            } else for (; i < h; i++) {
+                target[i] = item[i]; // array-like
             }
         }
         target.length = i;

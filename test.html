@@ -107,6 +107,7 @@
                  && array.length === $array.length
                  && array.length === $$array.length
                  && $array !== $$array // ensure separate instance
+                 && $array[0] === array[0]
                 );
             }
         });
