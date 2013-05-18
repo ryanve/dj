@@ -1,10 +1,9 @@
 /*!
- * dj           remixable hook/bridge/relay API designed for
- *              writing highly-extendable modular JavaScript
- * @author      Ryan Van Etten (c) 2012
+ * dj           remixable JavaScript
  * @link        http://github.com/ryanve/dj
+ * @copyright   Ryan Van Etten (c) 2012
  * @license     MIT
- * @version     0.7.4
+ * @version     0.8.0
  */
  
 /*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, node:true, evil:true,
@@ -12,22 +11,15 @@
 
 (function (root, name, make) {
     if (typeof module != 'undefined' && module['exports'])
-        module['exports'] = make(); 
-    else root[name] = root[name] || make();
+        module['exports'] = make.call(root); 
+    else root[name] = make.call(root);
 }(this, 'dj', function() {
 
     var hook
       , methods
+      , globe = this || window
       , OP = Object.prototype
       , owns = OP.hasOwnProperty
-
-      , gnd = (function() {
-            var globe = this || window;
-            return function(o) {
-                // for grounding (securing) scope
-                return o == null || o === globe ? 0 : o;
-            };
-        }())
 
       , ES5lineage = (function(Object) {
             // Feature test: check that Object.create exists and 
@@ -45,11 +37,13 @@
             } catch (e) { return false; }
         }(Object))
         
+        /** @deprecated Replace with `blood.line` @link github.com/ryanve/blood */ 
       , pro = (ES5lineage && Object.getPrototypeOf) || function(ob) {
             return void 0 !== ob["__proto__"] ? ob["__proto__"] : ob.constructor ? ob.constructor.prototype : OP;
         }
 
         /**
+         * @deprecated Replace with `blood.create` @link github.com/ryanve/blood
          * Create a new empty object whose prototype is set to the supplied arg. 
          * Uses to native Object.create when possible. The fallback supports
          * the *first arg* only. Adapted from @link github.com/kriskowal/es5-shim
@@ -133,6 +127,7 @@
     dj['fn']['$'] = dj; // reference to self
 
     /**
+     * @deprecated Replace with `blood.twin` @link github.com/ryanve/blood
      * Make new empty object w/ same proto as the `source`. Then
      * mixin the owned props from the `source` into the new object. 
      * Quasi deep clone (done partially via inheritance)
@@ -192,7 +187,7 @@
      * @param  {boolean=}           check     whether props must be owned (default: true)
      */
     function mixin(supplier, force, check) {
-        if (!gnd(this)) { throw new TypeError('@mixin'); }
+        if (this === globe) { throw new TypeError('@mixin'); }
         return expand(this, supplier, force, check !== false);
     }
 
@@ -228,7 +223,7 @@
      */
     function bridge(r, force, $) {
         var v, k, relay, s = this; // s is the supplier
-        if (!r || !gnd(s)) { return; }
+        if (!r || s === globe) { return; }
         force = true === force; // require explicit true to force
         $ = typeof $ == 'function' || typeof $ == 'object' ? $ : r; // allow null
 
@@ -266,96 +261,50 @@
      * Create a new hook() function tied to a clean hash.
      * @return {Function}
      */
-    function hookRemix () {
-        // Use objects that inherit null for hashes so that we don't need to
-        // test hasOwnProperty on "gets".
-        // Sidenode: ES5's `Object.create(null)` returns `{"__proto__": null}`
-        var defs = nu(null)  // defaults' hash
-          , curr = nu(null)  // currents' hash
-          , info = nu(null); // status hash (burned hooks cannot be updated)
+    function hookRemix() {
+        var curr = {}, info = {};
           
         /** 
          * Method for setting/getting hooks
          * @param {*=}  k     key
          * @param {*=}  v     value
+         * @param {*=}  guard
          */
-        function hook(k, v) {
-
-            var n, parlay, prefix, clone; 
-            k = typeof k == 'function' ? k.call(this, hook()) : k;
-            
-            // optimize for simple usage (esp. GET-simple)
-            
-            if (typeof k == 'string' || typeof k == 'number') {
-                if (void 0 === v) {
-                    return curr[k]; // GET-simple
+        function hook(k, v, guard) {
+            var n, bool, prefix; 
+            if (typeof k == 'string' || k === +k) {
+                if (void 0 === v || guard && v === +v)
+                    return owns.call(curr, k) ? curr[k] : void 0;
+                if (false === v || false === info[k]) {
+                    info[k] = false;
+                } else if (v) {
+                    if (typeof v == 'function')
+                        curr[k] = v;
+                    else if (typeof v == 'object')
+                        curr[k] = (n = hook(k)) ? expand(n, v, true, true) : v;
+                    else return;
+                    hook['trigger'] && hook['trigger'](k);
+                    return v;
                 }
-                if (info) { // only SET if 'BURN all' has not occured
-                    // SET-simple: `v` can be "object" only if the hook is empty or its default is "object"
-                    if (typeof v == 'function' || typeof v == 'object' && typeof defs[k] != 'function') {
-                        if (v && info[k] !== false) {// update unless burned
-                            curr[k] = v;
-                            defs[k] = defs[k] || v;
-                        }
-                    } else if (v === false) {
-                        // burn it (lock it) at its current state
-                        info[k] = v;
-                    } else if (v === true) {
-                        // restore default (possible even if burned)
-                        curr[k] = defs[k]; 
-                    }
-                }
-                if (null === v) {
-                    return info[k] !== false; // status
-                }
-
-                return gnd(this) || curr[k]; // curr value
-            }
-
-            if (typeof k == 'boolean') {
-                if (!k) {
-                    // BURN all (false)
-                    info = defs = null; // nullify both to free up memory
-                } else if (info) {// RESTORE defaults (true) (if 'BURN all' has not occured)
-                    curr = nu(null);
-                    for (n in defs) {
-                        curr[n] = defs[n]; 
-                    }
-                }
-                k = void 0; // reset `k` so it parlays into the GET-all block
-            }
-            
-            if (void 0 === k) { // GET-all
-                clone = nu(null); 
-                for (n in curr) {
-                    clone[n] = curr[n]; 
-                }
-                return clone;
-            }
-            
-            if (null === k) { // GET-status-all
-                return !!info; 
-            }
-
-            // `k` should be "object" if we get to here
-            if (info) {// SET-multi
+            } else if (k && true !== k) {
                 prefix = typeof v == 'string' ? v : '';
-                parlay = typeof v == 'boolean';
+                bool = false !== v && false !== guard;
                 for (n in k) {
-                    hook(prefix + n, k[n]); // set each
-                    parlay && hook(prefix + n, v); 
+                    hook(prefix + n, k[n]);
+                    bool || hook(prefix + n, bool); 
                 }
+                return k;
+            } else if (!arguments.length) {
+                return expand({}, curr, true, true);
             }
-
-            return gnd(this) || void 0;
-        }// hook
+        }
         
         // Allow an existing `hook()` to be bridged to another module so that
         // they can share hooks. (In other words, don't set its relay to false.) 
         // Provide the remix method as a way to explicitly redefine it:
         hook['remix'] = hookRemix;
         return hook;
-    }// hookRemix
+    }
     
     hook = hookRemix();
     
@@ -366,7 +315,7 @@
       , 'count': count
       , 'stack': stack
       , 'nu': nu
-      , 'bridge': bridge 
+      , 'bridge': bridge
       , 'resample': resample
       , 'expand': expand
       , 'mixin': mixin
