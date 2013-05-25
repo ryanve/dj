@@ -10,7 +10,7 @@ npm install dj
 
 ## API
 
-Consider **0.x** versions as **experimental**. See the [source](dj.js) for more details.
+Consider **0.x** [versions](../../tags) as **experimental**. See the [source](dj.js) for more details.
 
 ### Methods
 
