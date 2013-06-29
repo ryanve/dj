@@ -3,7 +3,7 @@
  * @link        http://github.com/ryanve/dj
  * @copyright   Ryan Van Etten (c) 2012
  * @license     MIT
- * @version     0.8.1
+ * @version     0.9.0
  */
  
 /*jshint expr:true, laxcomma:true, sub:true, debug:true, eqnull:true, boss:true, node:true, evil:true,
@@ -19,49 +19,7 @@
       , methods
       , globe = this || window
       , OP = Object.prototype
-      , owns = OP.hasOwnProperty
-
-      , ES5lineage = (function(Object) {
-            // Feature test: check that Object.create exists and 
-            // that it properly implements the full capabilities
-            // of the first param. (Does not test the 2nd param.)
-            // Read @link github.com/kriskowal/es5-shim/pull/118
-            var o, k = 'k';
-            function fun() {}
-            fun[k] = 'object';
-            try {
-                o = Object.create(null); // attempt to create an object with *zero* properties
-                if (!o || o.toString || null !== Object.getPrototypeOf(o)) { return false; }
-                if (!Object.create([]).pop || !(o = Object.create(fun))) { return false; }
-                return typeof o === o[k] && Object.getPrototypeOf(o) === fun;
-            } catch (e) { return false; }
-        }(Object))
-        
-        /** @deprecated Replace with `blood.line` @link github.com/ryanve/blood */ 
-      , pro = (ES5lineage && Object.getPrototypeOf) || function(ob) {
-            return void 0 !== ob["__proto__"] ? ob["__proto__"] : ob.constructor ? ob.constructor.prototype : OP;
-        }
-
-        /**
-         * @deprecated Replace with `blood.create` @link github.com/ryanve/blood
-         * Create a new empty object whose prototype is set to the supplied arg. 
-         * Uses to native Object.create when possible. The fallback supports
-         * the *first arg* only. Adapted from @link github.com/kriskowal/es5-shim
-         * @link   bit.ly/mdn-object-create
-         * @link   github.com/kriskowal/es5-shim/pull/118
-         * @param  {Object|Function|Array|null}  parent  (typeof "object"|"function")
-         * @return {Object}  is an empty object that inherits properties from `parent`
-         */
-      , nu = (ES5lineage && Object.create) || function (parent) {
-            /** @constructor */
-            function F() {} // An empty constructor.
-            var object; // Becomes an `instanceof F`            
-            if (null === parent) { return { "__proto__": null }; }
-            F.prototype = parent;  // Set F's prototype to the parent Object
-            object = new F; // Get an empty object (instance) that inherits `parent`
-            object["__proto__"] = parent; // ensure `Object.getPrototypeOf` will work in IE
-            return object;
-        };
+      , owns = OP.hasOwnProperty;
     
     /**
      * Logic for discerning arrays/arr-like object from other objects or types.
@@ -127,25 +85,15 @@
     dj['fn']['$'] = dj; // reference to self
 
     /**
-     * @deprecated Replace with `blood.twin` @link github.com/ryanve/blood
-     * Make new empty object w/ same proto as the `source`. Then
-     * mixin the owned props from the `source` into the new object. 
-     * Quasi deep clone (done partially via inheritance)
-     * @param  {(Object|Function|null)=}  source
-     * @param  {(Object|Function|null)=}  opt_parent
+     * @deprecated Replace with `blood.twin`
+     * @link   github.com/ryanve/blood
+     * @link   stackoverflow.com/q/16594717/770127
      * @return {Object}
      */
-    function resample(source, opt_parent) {
-        var n, r;
-        source = arguments.length && true !== source ? source : this;
-        opt_parent = void 0 === opt_parent ? pro(source) : opt_parent;
-        r = nu(opt_parent);
-        for (n in source) {
-            // owned props enumerate first so stop when unowned
-            if (!owns.call(source, n)) { break; }
-            r[n] = source[n]; 
-        }
-        return r;
+    function resample() {
+        if (typeof blood != 'undefined')
+            return blood.twin.apply(this, arguments);
+        throw new TypeError('@deprecated @resample');
     }
 
     /**
@@ -311,10 +259,10 @@
     methods = {
         'hook': hook
       , 'owns': owns
-      , 'pro': pro
       , 'count': count
       , 'stack': stack
-      , 'nu': nu
+      , 'nu': Object.create
+      , 'pro': Object.getPrototypeOf
       , 'bridge': bridge
       , 'resample': resample
       , 'expand': expand
