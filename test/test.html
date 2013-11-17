@@ -34,23 +34,20 @@
           , $ = dj;
         
         /**
-         * @param  {Object|Function}          source
-         * @param  {(Object|Function|null)=}  parent
+         * @link https://github.com/ryanve/blood
+         * @param {Object|Function} source
+         * @param {(Object|Function|null)=} parent
          * @return {Object}
          */
-        function twin(source, parent) {
+        dj.win = function twin(source, parent) {
             var twin, owned, i = arguments.length;
             source = i ? source : this; // use self when called w/o args
             parent = 2 == i ? parent : Object.getPrototypeOf(source);
             twin = Object.create(parent);
             owned = Object.getOwnPropertyNames(source);
-            for (i = owned.length; i--;) {
-                twin[owned[i]] = source[owned[i]];
-            }
+            for (i = owned.length; i--;) twin[owned[i]] = source[owned[i]];
             return twin;
-        }
-        
-        dj.twin = twin;
+        };
 
         aok({
             id: 'stackItems'

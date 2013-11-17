@@ -25,7 +25,7 @@ module.exports = function(grunt) {
                 ignores: ['**/**/node_modules/', '**/**/vendor/', '**/**.min.js'],
                 debug:true, expr:true, sub:true, boss:true, supernew:true, node:true, 
                 undef:true, unused:true, devel:true, evil:true, laxcomma:true, eqnull:true, 
-                browser:true, globals:{ender:true, define:true, blood:true}, jquery:true, maxerr:10
+                browser:true, globals:{ender:true, define:true}, jquery:true, maxerr:10
             }
         },
         concat: {

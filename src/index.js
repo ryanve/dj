@@ -79,8 +79,8 @@
      * @return {Object}
      */
     function resample() {
-        if (typeof blood != 'undefined') return blood.twin.apply(this, arguments);
-        throw new Error('@deprecated @resample');
+        if (this['twin']) return this['twin'].apply(this, arguments);
+        throw new Error('@deprecated: resample');
     }
 
     /**

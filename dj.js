@@ -1,5 +1,5 @@
 /*!
- * dj 0.10.0+201311170627
+ * dj 0.10.0+201311170641
  * https://github.com/ryanve/dj
  * MIT License 2013 Ryan Van Etten
  */
@@ -85,8 +85,8 @@
      * @return {Object}
      */
     function resample() {
-        if (typeof blood != 'undefined') return blood.twin.apply(this, arguments);
-        throw new Error('@deprecated @resample');
+        if (this['twin']) return this['twin'].apply(this, arguments);
+        throw new Error('@deprecated: resample');
     }
 
     /**
