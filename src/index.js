@@ -81,7 +81,7 @@
     function resample() {
         if (typeof blood != 'undefined')
             return blood.twin.apply(this, arguments);
-        throw new TypeError('@deprecated @resample');
+        throw new Error('@deprecated @resample');
     }
 
     /**
@@ -101,8 +101,8 @@
      */
     function expand(receiver, supplier, force, check) {
         var n;
-        if (null == receiver) { throw new TypeError('@expand'); }
-        if (null == supplier) { return receiver; }
+        if (null == receiver) throw new TypeError('@expand');
+        if (null == supplier) return receiver;
         force = force === true; // must be explicit
         check = check === true ? owns : check;
         for (n in supplier) {
@@ -123,7 +123,7 @@
      * @param  {boolean=}           check     whether props must be owned (default: true)
      */
     function mixin(supplier, force, check) {
-        if (this === globe) { throw new TypeError('@mixin'); }
+        if (this == globe) throw new Error('@this');
         return expand(this, supplier, force, check !== false);
     }
 
