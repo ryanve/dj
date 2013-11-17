@@ -1,14 +1,21 @@
 {
     "name": "dj",
     "description": "remixable JavaScript",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "homepage": "https://github.com/ryanve/dj",
-    "author": "Ryan Van Etten <@ryanve>",
-    "keywords": ["extension", "integration", "hook", "bridge", "ender", "jam", "javascript", "js"],
+    "author": "Ryan Van Etten",
+    "license": "MIT",
+    "keywords": ["extension", "integration", "hook", "bridge", "ender"],
     "main": "./dj.js",
-    "ender": "./ender.js",
+    "ender": "./src/ender.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/ryanve/dj.git"
+    },
+    "devDependencies": {
+        "grunt": "~0.4.1",
+        "grunt-contrib-uglify": "~0.2.4",
+        "grunt-contrib-concat": "~0.3.0",
+        "grunt-contrib-jshint": "~0.6.4"
     }
 }

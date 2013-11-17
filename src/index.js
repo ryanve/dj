@@ -1,9 +1,3 @@
-/*!
- * dj 0.10.0+201311170604
- * https://github.com/ryanve/dj
- * MIT License 2013 Ryan Van Etten
- */
-
 (function (root, name, make) {
     if (typeof module != 'undefined' && module['exports']) module['exports'] = make(); 
     else root[name] = make();
